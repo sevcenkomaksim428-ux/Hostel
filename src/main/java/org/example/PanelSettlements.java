@@ -36,22 +36,20 @@ public class PanelSettlements extends JPanel {
     public PanelSettlements() {
         setLayout(new BorderLayout());
 
-        // 1. Заголовок
         JLabel titleLabel = new JLabel("Оформлення нового поселення", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         add(titleLabel, BorderLayout.NORTH);
 
-        // 2. Головна форма по центру (використовуємо GridBagLayout, щоб форма не розтягувалася на весь екран)
         JPanel formContainer = new JPanel(new GridBagLayout());
 
-        JPanel formPanel = new JPanel(new GridLayout(7, 2, 15, 20)); // 7 рядків, 2 колонки, відступи
+        JPanel formPanel = new JPanel(new GridLayout(7, 2, 15, 20));
         formPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), // Рамка
-                BorderFactory.createEmptyBorder(30, 40, 30, 40)      // Внутрішні відступи
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+                BorderFactory.createEmptyBorder(30, 40, 30, 40)
         ));
 
-        // Ініціалізація полів
+
         cbClients = new JComboBox<>();
         cbRooms = new JComboBox<>();
 
@@ -59,7 +57,7 @@ public class PanelSettlements extends JPanel {
         checkInSpinner.setEditor(new JSpinner.DateEditor(checkInSpinner, "yyyy-MM-dd"));
 
         checkOutSpinner = new JSpinner(new SpinnerDateModel());
-        checkOutSpinner.setValue(new Date(System.currentTimeMillis() + 86400000L)); // +1 день за замовчуванням
+        checkOutSpinner.setValue(new Date(System.currentTimeMillis() + 86400000L));
         checkOutSpinner.setEditor(new JSpinner.DateEditor(checkOutSpinner, "yyyy-MM-dd"));
 
         JPanel servicesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -72,12 +70,11 @@ public class PanelSettlements extends JPanel {
 
         lblTotalCost = new JLabel("0.00 грн");
         lblTotalCost.setFont(new Font("Arial", Font.BOLD, 20));
-        lblTotalCost.setForeground(new Color(0, 102, 51)); // Темно-зелений колір грошей
+        lblTotalCost.setForeground(new Color(0, 102, 51));
 
         tfPayment = new JTextField("0");
         tfPayment.setFont(new Font("Arial", Font.PLAIN, 16));
 
-        // Додаємо елементи на форму
         formPanel.add(new JLabel("Оберіть клієнта:")); formPanel.add(cbClients);
         formPanel.add(new JLabel("Вільна кімната:")); formPanel.add(cbRooms);
         formPanel.add(new JLabel("Дата заїзду:")); formPanel.add(checkInSpinner);
@@ -86,10 +83,9 @@ public class PanelSettlements extends JPanel {
         formPanel.add(new JLabel("ЗАГАЛЬНА ВАРТІСТЬ:")); formPanel.add(lblTotalCost);
         formPanel.add(new JLabel("Внесена сума (Оплата):")); formPanel.add(tfPayment);
 
-        formContainer.add(formPanel); // Кладемо форму в контейнер
+        formContainer.add(formPanel);
         add(formContainer, BorderLayout.CENTER);
 
-        // 3. Нижня панель з кнопками
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
         btnSave = new JButton("Оформити поселення");
         btnSave.setFont(new Font("Arial", Font.BOLD, 16));
@@ -104,13 +100,12 @@ public class PanelSettlements extends JPanel {
         bottomPanel.add(btnRefresh);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // Запуск логіки та завантаження даних з БД
         initLogic();
         refreshData();
     }
 
     private void initLogic() {
-        // --- ЛОГІКА АВТОРОЗРАХУНКУ ---
+
         Runnable recalculate = () -> {
             try {
                 Date inDate = (Date) checkInSpinner.getValue();
@@ -126,15 +121,14 @@ public class PanelSettlements extends JPanel {
                 double roomPrice = (selectedRoom != null) ? selectedRoom.price : 0;
 
                 double total = days * roomPrice;
-                if (chkBreakfast.isSelected()) total += (150 * days); // Сніданок щодня
-                if (chkLaundry.isSelected()) total += 100; // Прання одноразово
-                if (chkTowels.isSelected()) total += 50;   // Рушники одноразово
+                if (chkBreakfast.isSelected()) total += (150 * days);
+                if (chkLaundry.isSelected()) total += 100;
+                if (chkTowels.isSelected()) total += 50;
 
                 lblTotalCost.setText(String.format("%.2f", total).replace(",", "."));
             } catch (Exception ex) {}
         };
 
-        // Вішаємо слухачів на зміни (щоб ціна мінялася на льоту)
         cbRooms.addActionListener(e -> recalculate.run());
         checkInSpinner.addChangeListener(e -> recalculate.run());
         checkOutSpinner.addChangeListener(e -> recalculate.run());
@@ -142,7 +136,6 @@ public class PanelSettlements extends JPanel {
         chkLaundry.addActionListener(e -> recalculate.run());
         chkTowels.addActionListener(e -> recalculate.run());
 
-        // --- ЛОГІКА ЗБЕРЕЖЕННЯ В БД ---
         btnSave.addActionListener(e -> {
             ClientItem client = (ClientItem) cbClients.getSelectedItem();
             RoomItem room = (RoomItem) cbRooms.getSelectedItem();
@@ -172,13 +165,11 @@ public class PanelSettlements extends JPanel {
                     pstmt.setString(6, paymentStatus);
                     pstmt.executeUpdate();
 
-                    // 2. Робимо кімнату "Зайнятою"
                     String updateRoom = "UPDATE Rooms SET status='Зайнято' WHERE room_number=?";
                     PreparedStatement pstmtRoom = conn.prepareStatement(updateRoom);
                     pstmtRoom.setInt(1, room.number);
                     pstmtRoom.executeUpdate();
 
-                    // Повідомлення про успіх
                     JOptionPane.showMessageDialog(this, "Поселення успішно оформлено!\n" +
                             "Кімната №" + room.number + " тепер зайнята.\n" +
                             "Статус оплати: " + paymentStatus);
@@ -195,11 +186,10 @@ public class PanelSettlements extends JPanel {
             }
         });
 
-        // Кнопка оновлення списків (корисно, якщо інший адміністратор додав клієнта в цей же час)
         btnRefresh.addActionListener(e -> refreshData());
     }
 
-    // Завантаження клієнтів і ТІЛЬКИ ВІЛЬНИХ кімнат
+
     private void refreshData() {
         cbClients.removeAllItems();
         cbRooms.removeAllItems();
@@ -207,13 +197,13 @@ public class PanelSettlements extends JPanel {
         try (Connection conn = DBConnection.getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // Завантажуємо клієнтів
+
             ResultSet rsClients = stmt.executeQuery("SELECT id_clients, passport_data FROM Clients");
             while (rsClients.next()) {
                 cbClients.addItem(new ClientItem(rsClients.getInt("id_clients"), "Паспорт: " + rsClients.getString("passport_data")));
             }
 
-            // Завантажуємо вільні кімнати
+
             ResultSet rsRooms = stmt.executeQuery("SELECT room_number, price_per_night FROM Rooms WHERE status = 'Вільно'");
             while (rsRooms.next()) {
                 cbRooms.addItem(new RoomItem(rsRooms.getInt("room_number"), rsRooms.getDouble("price_per_night")));
