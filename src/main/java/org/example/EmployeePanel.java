@@ -122,7 +122,7 @@ public class EmployeePanel extends JPanel {
                     JOptionPane.showMessageDialog(this, "Дані оновлено!");
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this, "Помилка: Зарплата має бути числом!");
-                } catch (Exception ex) {
+                } catch(Exception ex) {
                     JOptionPane.showMessageDialog(this, "Помилка БД: " + ex.getMessage());
                 }
             }
